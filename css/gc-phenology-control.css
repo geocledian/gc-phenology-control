@@ -1,0 +1,27 @@
+.gc-field-horizontal {
+    padding: 1em;
+    /*min-width: 10em;*/
+}
+.gc-field-vertical {
+    margin: 0.25em !important;
+    /*min-width: 10em;*/
+}
+.gc-field-vertical .label{
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+.gc-button-analytics {
+    width: 10em;
+}
+.gc-options-title > i {
+    transform: rotate(0deg);
+    transition: all 0.15s ease-in;
+}
+.gc-options-title:hover {
+    color:#ff9800  !important;
+}
+.gc-options-title > i.is-active {
+    color: #9D9D9C !important;
+    transform: rotate(180deg);
+    transition: all 0.15s ease-in;
+}
