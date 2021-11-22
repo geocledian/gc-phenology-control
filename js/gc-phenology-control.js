@@ -9,7 +9,7 @@
 //language strings
 const gcPhenologyLocales = {
   "en": {
-    "options": { "title": "Phenology" },
+    "options": { "title": "Phenology", "date_format_hint": "YYYY-MM-DD", },
     "phenology" : {
       "settings": "Phenology options",
       "startdate": "Start date",
@@ -19,7 +19,7 @@ const gcPhenologyLocales = {
     }
   },
   "de": {
-    "options": { "title": "Phänologie" },
+    "options": { "title": "Phänologie", "date_format_hint": "JJJJ-MM-TT", },
     "phenology" : {
       "settings": "Phänologie Einstellungen",
       "startdate": "Anfangsdatum",
@@ -88,13 +88,13 @@ Vue.component('gc-phenology', {
                     <div :class="['field', 'gc-field-'+gcLayout]">
                       <label class="label is-grey is-small has-text-left"> {{ $t('phenology.startdate') }} </label>
                       <div class="control">
-                        <input type="text" class="input is-small" v-bind:placeholder="$t('phenology.startdate')" v-model="startDate">
+                        <input :id="'inpstartdate_' + gcWidgetId" type="text" class="input is-small" v-bind:placeholder="$t('options.date_format_hint')" v-model="startDate">
                       </div>
                     </div>
                     <div :class="['field', 'gc-field-'+gcLayout]">
                       <label class="label is-grey is-small has-text-left"> {{ $t('phenology.enddate') }} </label>
                       <div class="control">
-                        <input type="text" class="input is-small" v-bind:placeholder="$t('phenology.enddate')" v-model="endDate">
+                        <input :id="'inpenddate_' + gcWidgetId" type="text" class="input is-small" v-bind:placeholder="$t('options.date_format_hint')" v-model="endDate">
                       </div>
                     </div>
 
@@ -117,7 +117,7 @@ Vue.component('gc-phenology', {
     console.debug("gc-phenology - data()");
     return {
         phenology: "",
-        phenologySettings: false,
+        phenologySettings: true,
         layoutCSSMap: { "alignment": {"vertical": "is-inline-block", "horizontal": "is-flex" }}
     }
   },
@@ -136,6 +136,36 @@ Vue.component('gc-phenology', {
     try {
       this.changeLanguage();
     } catch (ex) {}
+
+    // init date pickers
+    this.startdateCalendar = new bulmaCalendar( document.getElementById( 'inpstartdate_'+this.gcWidgetId ), {
+      startDate: new Date(), // Date selected by default
+      dateFormat: 'yyyy-mm-dd', // the date format `field` value
+      lang: this.gcLanguage, // internationalization
+      overlay: false,
+      closeOnOverlayClick: true,
+      closeOnSelect: true,
+      // callback functions
+      onSelect: function (e) { 
+                  // hack +1 day
+                  var a = new Date(e.valueOf() + 1000*3600*24);
+                  this.startDate = a.toISOString().split("T")[0]; //ISO String splits at T between date and time
+                  }.bind(this),
+    });
+    this.enddateCalendar = new bulmaCalendar( document.getElementById( 'inpenddate_'+this.gcWidgetId ), {
+      startDate: new Date(), // Date selected by default
+      dateFormat: 'yyyy-mm-dd', // the date format `field` value
+      lang: this.gcLanguage, // internationalization
+      overlay: false,
+      closeOnOverlayClick: true,
+      closeOnSelect: true,
+      // callback functions
+      onSelect: function (e) { 
+                  // hack +1 day
+                  var a = new Date(e.valueOf() + 1000*3600*24);
+                  this.endDate = a.toISOString().split("T")[0]; //ISO String splits at T between date and time
+                  }.bind(this),
+    });
 
   },
   computed: {
