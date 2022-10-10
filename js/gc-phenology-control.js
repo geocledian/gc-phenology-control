@@ -1,15 +1,15 @@
 /*
  Vue.js Geocledian phenology component
  created: 2021-09-21, jsommer
- updated: 2021-09-21, jsommer
- version: 0.1
+ updated: 2021-10-10, jsommer
+ version: 0.2
 */
 "use strict";
 
 //language strings
 const gcPhenologyLocales = {
   "en": {
-    "options": { "title": "Phenology", "date_format_hint": "YYYY-MM-DD", },
+    "options": { "title": "Phenology options", "date_format_hint": "YYYY-MM-DD", },
     "phenology" : {
       "settings": "Phenology options",
       "startdate": "Start date",
@@ -64,21 +64,20 @@ Vue.component('gc-phenology', {
   },
   template: `<div :id="this.gcWidgetId" class="">
 
-                <p :class="['gc-options-title', 'is-size-6', gcWidgetCollapsed ? 'is-grey' : 'is-orange']" 
+                <!-- p :class="['gc-options-title', 'is-size-6', !gcWidgetCollapsed ? 'gc-is-primary' : 'gc-is-tertiary']" 
                   style="cursor: pointer; margin-bottom: 0.5em;"    
                   v-on:click="togglePhenology" 
-                  v-show="availableOptions.includes('widgetTitle')"> 
-                  {{ $t('options.title')}}
+                  v-show="availableOptions.includes('widgetTitle')"> {{ $t('options.title')}}
                   <i :class="[!gcWidgetCollapsed ? '': 'is-active', 'fas', 'fa-angle-down', 'fa-sm']"></i>
-                </p>
+                </p -->
 
                 <!-- phenology container -->
                 <div :class="[!gcWidgetCollapsed ? '': 'is-hidden']" style="margin-bottom: 1em;">
 
-                  <div style="margin-top: 0.5em; margin-bottom: 0.5em;">
-                    <p :class="['is-6 ', !phenologySettings ? 'is-grey' : 'is-orange']" 
+                  <div style="margin-bottom: 0.5em;">
+                    <p :class="['gc-options-title', 'is-size-6 ', phenologySettings ? 'gc-is-primary' : 'gc-is-tertiary']" 
                     v-on:click="phenologySettings =! phenologySettings" style="cursor: pointer; margin-bottom: 0.5em!important;">
-                    {{ $t('phenology.settings') }} 
+                    {{ $t('options.title') }} 
                     <i :class="[phenologySettings ? '': 'is-active', 'fas', 'fa-angle-down', 'fa-sm']"></i>
                     </p>
                   </div>
@@ -99,25 +98,27 @@ Vue.component('gc-phenology', {
                     </div>
 
                   </div> <!-- pheno settings -->
-        
-                  <!-- pheno buttons -->
-                  <div class="is-flex" style="padding-top: 1em;">
-                    <button class="button is-light is-orange gc-button-analytics" v-on:click="getPhenology()">
-                      <span class="content"><i class="fas fa-seedling fa-sm"></i> {{ $t('phenology.getPhenology')}} </span>
-                    </button>
-                    <button class="button is-light is-orange" v-on:click="resetPhenology()" v-bind:title="$t('phenology.reset')">
-                      <i class="fas fa-undo fa-sm"></i><span class="content"></span>
-                    </button>
-                  </div><!-- pheno buttons -->
 
                 </div><!-- phenology container -->
+
+                <!-- pheno buttons -->
+                <div class="is-flex" style="">
+                  <button class="button is-light is-orange gc-button-analytics" v-on:click="getPhenology()">
+                    <span class="content"><i class="fas fa-seedling fa-sm"></i> {{ $t('phenology.getPhenology')}} </span>
+                  </button>
+                  <button class="button is-light is-orange" v-on:click="resetPhenology()" v-bind:title="$t('phenology.reset')">
+                    <i class="fas fa-undo fa-sm"></i><span class="content"></span>
+                  </button>
+                </div><!-- pheno buttons -->
 
             </div><!-- gcWidgetId -->`,
   data: function () {
     console.debug("gc-phenology - data()");
     return {
         phenology: "",
-        phenologySettings: true,
+        phenologySettings: false,
+        startdateCalendar: undefined,
+        enddateCalendar: undefined,
         layoutCSSMap: { "alignment": {"vertical": "is-inline-block", "horizontal": "is-flex" }}
     }
   },
@@ -138,34 +139,7 @@ Vue.component('gc-phenology', {
     } catch (ex) {}
 
     // init date pickers
-    this.startdateCalendar = new bulmaCalendar( document.getElementById( 'inpstartdate_'+this.gcWidgetId ), {
-      startDate: new Date(), // Date selected by default
-      dateFormat: 'yyyy-mm-dd', // the date format `field` value
-      lang: this.gcLanguage, // internationalization
-      overlay: false,
-      closeOnOverlayClick: true,
-      closeOnSelect: true,
-      // callback functions
-      onSelect: function (e) { 
-                  // hack +1 day
-                  var a = new Date(e.valueOf() + 1000*3600*24);
-                  this.startDate = a.toISOString().split("T")[0]; //ISO String splits at T between date and time
-                  }.bind(this),
-    });
-    this.enddateCalendar = new bulmaCalendar( document.getElementById( 'inpenddate_'+this.gcWidgetId ), {
-      startDate: new Date(), // Date selected by default
-      dateFormat: 'yyyy-mm-dd', // the date format `field` value
-      lang: this.gcLanguage, // internationalization
-      overlay: false,
-      closeOnOverlayClick: true,
-      closeOnSelect: true,
-      // callback functions
-      onSelect: function (e) { 
-                  // hack +1 day
-                  var a = new Date(e.valueOf() + 1000*3600*24);
-                  this.endDate = a.toISOString().split("T")[0]; //ISO String splits at T between date and time
-                  }.bind(this),
-    });
+    this.initDatePickers();
 
   },
   computed: {
@@ -202,6 +176,8 @@ Vue.component('gc-phenology', {
   watch: {
     currentLanguage(newValue, oldValue) {
       this.changeLanguage();
+      // reinit date pickers for different language
+      this.initDatePickers();
     },
   },
   methods: {  
@@ -216,6 +192,45 @@ Vue.component('gc-phenology', {
     },
     resetPhenology() {
       this.$root.$emit('resetPhenology');
+    },
+    initDatePickers() {
+      
+      if (this.startdateCalendar) {
+        this.startdateCalendar.destroy();
+      }
+      this.startdateCalendar = new bulmaCalendar( document.getElementById( 'inpstartdate_'+this.gcWidgetId ), {
+        startDate: new Date(), // Date selected by default
+        dateFormat: 'yyyy-mm-dd', // the date format `field` value
+        lang: this.currentLanguage, // internationalization
+        overlay: false,
+        closeOnOverlayClick: true,
+        closeOnSelect: true,
+        align: "right",
+        // callback functions
+        onSelect: function (e) { 
+                    // hack +1 day
+                    var a = new Date(e.valueOf() + 1000*3600*24);
+                    this.startDate = a.toISOString().split("T")[0]; //ISO String splits at T between date and time
+                    }.bind(this),
+      });
+      if (this.enddateCalendar) {
+        this.enddateCalendar.destroy();
+      }
+      this.enddateCalendar = new bulmaCalendar( document.getElementById( 'inpenddate_'+this.gcWidgetId ), {
+        startDate: new Date(), // Date selected by default
+        dateFormat: 'yyyy-mm-dd', // the date format `field` value
+        lang: this.currentLanguage, // internationalization
+        overlay: false,
+        closeOnOverlayClick: true,
+        closeOnSelect: true,
+        align: "right",
+        // callback functions
+        onSelect: function (e) { 
+                    // hack +1 day
+                    var a = new Date(e.valueOf() + 1000*3600*24);
+                    this.endDate = a.toISOString().split("T")[0]; //ISO String splits at T between date and time
+                    }.bind(this),
+      });
     }
   }
 });
