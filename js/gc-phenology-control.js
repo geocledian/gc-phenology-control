@@ -14,7 +14,7 @@ const gcPhenologyLocales = {
       "settings": "Phenology options",
       "startdate": "Start date",
       "enddate": "End date",
-      "getPhenology": "Get Phenology",
+      "getPhenology": "Get phenology",
       "reset": "Reset"
     }
   },
